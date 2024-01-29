@@ -8,7 +8,7 @@ typedef struct NMEA_Data{
 
 void nmea_parse(GPS *gps_data,uint8_t *buffer);
 
-in main function:
+//in main function:
 
 int nmea_GPGGA(GPS *gps_data,char* inputstr)
 {
