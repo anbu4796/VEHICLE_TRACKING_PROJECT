@@ -1,0 +1,72 @@
+#include<string.h>
+#include<stdlin.h>
+
+typedef struct NMEA_Data{
+    double  latitude;
+    double longitude;
+}GPS;
+
+void nmea_parse(GPS *gps_data,uint8_t *buffer);
+
+in main function:
+
+int nmea_GPGGA(GPS *gps_data,char* inputstr)
+{
+     char* values[25],marker;
+     int count=0;
+     memset(values,0,sizeof(values));
+     while(count!=7)
+     {
+         values[count++]=malloc(strlen(marker)+1);
+         strcpy(values[count-1],marker);
+     }
+     char lonSide = values[5][0];
+    char latSide = values[3][0];
+    strcpy(gps_data->lastMeasure, values[1]);
+    if(latSide == 'S' || latSide == 'N'){
+        char lat_d[2];
+        char lat_m[7];
+        for (int z = 0; z < 2; z++) lat_d[z] = values[2][z];
+        for (int z = 0; z < 6; z++) lat_m[z] = values[2][z + 2];
+
+        int lat_deg_strtol = strtol(lat_d, NULL, 10);
+        float lat_min_strtof = strtof(lat_m, NULL);
+        double lat_deg = lat_deg_strtol + lat_min_strtof / 60;
+
+        char lon_d[3];
+        char lon_m[7];
+
+        for (int z = 0; z < 3; z++) lon_d[z] = values[4][z];
+        for (int z = 0; z < 6; z++) lon_m[z] = values[4][z + 3];
+
+        int lon_deg_strtol = strtol(lon_d, NULL, 10);
+        float lon_min_strtof = strtof(lon_m, NULL);
+        double lon_deg = lon_deg_strtol + lon_min_strtof / 60;
+
+        if(lat_deg!=0 && lon_deg!=0 && lat_deg<90 && lon_deg<180){
+            gps_data->latitude = lat_deg;
+            gps_data->latSide = latSide;
+            gps_data->longitude = lon_deg;
+            gps_data->lonSide = lonSide;
+       }
+}
+void nmea_parse(GPS *gps_data, uint8_t *buffer){
+    memset(data, 0, sizeof(data));
+    char * token = strtok(buffer, "$");
+    int cnt = 0;
+    while(token !=NULL){
+        data[cnt++] = malloc(strlen(token)+1); //free later!!!!!
+        strcpy(data[cnt-1], token);
+        token = strtok(NULL, "$");
+    }
+    for(int i = 0; i<cnt; i++){
+       if(strstr(data[i], "GPGGA")!=NULL){
+               nmea_GPGGA(gps_data, data[i]);
+           }
+       }
+
+    }
+    for(int i = 0; i<cnt; i++) free(data[i]);
+
+
+} 
