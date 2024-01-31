@@ -18,12 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-UART_HandleTypeDef huart2;
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
 #include "string.h"
-#include "stdint.h"
 #include "stdio.h"
+#define RXSIZE 20
+static uint8_t RxBuf[20];
 int _write(int file,char *ptr,int len)
 {
     int i=0;
@@ -31,31 +29,15 @@ int _write(int file,char *ptr,int len)
     	ITM_SendChar((*ptr++));
     return len;
 }
-#define RX_BUFFER_SIZE             128
-/* "RX buffer" to store incoming data from GSM module */
-char RX_Buffer[RX_BUFFER_SIZE];
 
-/*"Incoming_SMS_Phone_num" to store incomming SMS number */
-char Incoming_SMS_Phone_Num[13] = {'\0'};
-
-/*Incoming_SMS_Message" to store SMS received */
-char Incoming_SMS_Message[100] ={'\0'};
-int GSM_Compare_GSMData_With(const char* string)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	char* ptr = NULL;
-  /*Compare given string with GSM data*/
-	ptr = strstr(RX_Buffer, string);
-	/* if ptr = NULL, then no match found else match found*/
-  if(ptr!=NULL)
-		return 1;
-	else
-		return 0;
+	 printf("IN callback %s\n", RxBuf);
+	 memset(RxBuf,0,10);
+
 }
-
-/*void GSM_receive()
-{
-	HAL_UART_Receive(&huart2,(uint8_t *)RX_Buffer, RX_BUFFER_SIZE,2000);
-}*/
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
@@ -75,6 +57,8 @@ int GSM_Compare_GSMData_With(const char* string)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_rx;
 
 /* USER CODE BEGIN PV */
 
@@ -83,6 +67,7 @@ int GSM_Compare_GSMData_With(const char* string)
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -121,9 +106,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Receive_DMA(&huart2,(uint8_t *) RxBuf, 10);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -131,10 +117,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  GSM_Send_AT_Command("AT");
-	  while( HAL_UART_Receive(&huart2,(uint8_t *)RX_Buffer, RX_BUFFER_SIZE,2000));
-	  printf("Received data %s\n",RX_Buffer);
-	  HAL_Delay(1000);
+	  HAL_UART_Transmit(&huart2, (uint8_t *)"AT\r\n", sizeof("AT\r\n"),10);
+	  HAL_Delay(2000);
+	  printf("Received Data : %s\n", RxBuf);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -225,17 +210,44 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel6_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PA5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

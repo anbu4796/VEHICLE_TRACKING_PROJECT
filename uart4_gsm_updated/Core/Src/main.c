@@ -18,12 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-UART_HandleTypeDef huart2;
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-#include "string.h"
-#include "stdint.h"
 #include "stdio.h"
+#include "string.h"
+#define RXSIZE 20
+uint8_t RxBuf[30];
+uint8_t string[100];
 int _write(int file,char *ptr,int len)
 {
     int i=0;
@@ -31,42 +30,24 @@ int _write(int file,char *ptr,int len)
     	ITM_SendChar((*ptr++));
     return len;
 }
-#define RX_BUFFER_SIZE             128
-/* "RX buffer" to store incoming data from GSM module */
-char RX_Buffer[RX_BUFFER_SIZE];
-
-/*"Incoming_SMS_Phone_num" to store incomming SMS number */
-char Incoming_SMS_Phone_Num[13] = {'\0'};
-
-/*Incoming_SMS_Message" to store SMS received */
-char Incoming_SMS_Message[100] ={'\0'};
-int GSM_Compare_GSMData_With(const char* string)
-{
-	char* ptr = NULL;
-  /*Compare given string with GSM data*/
-	ptr = strstr(RX_Buffer, string);
-	/* if ptr = NULL, then no match found else match found*/
-  if(ptr!=NULL)
-		return 1;
-	else
-		return 0;
-}
-
-/*void GSM_receive()
-{
-	HAL_UART_Receive(&huart2,(uint8_t *)RX_Buffer, RX_BUFFER_SIZE,2000);
-}*/
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+UART_HandleTypeDef huart4;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  printf("Received data %s\n",RxBuf);
+  memset(RxBuf,0,20);
+  HAL_UART_Receive_IT(&huart4, RxBuf, 30);
+}
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -75,6 +56,8 @@ int GSM_Compare_GSMData_With(const char* string)
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart4;
+DMA_HandleTypeDef hdma_uart4_rx;
 
 /* USER CODE BEGIN PV */
 
@@ -83,14 +66,15 @@ int GSM_Compare_GSMData_With(const char* string)
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
+static void MX_DMA_Init(void);
+static void MX_UART4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+  //  creating a buffer of 2 bytes
 /* USER CODE END 0 */
 
 /**
@@ -121,20 +105,25 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
+  MX_DMA_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_UART_Receive_DMA(&huart4,(uint8_t *) RxBuf, 30);
+  HAL_UART_Transmit(&huart4,(uint8_t *)"AT+CSQ\r\n", sizeof("AT+CSQ\r\n"), 20);
+ 	  printf("Sent data :AT\n");
+ 	  HAL_Delay (2000);
+ 	  HAL_GPIO_TogglePin (GPIOA, GPIO_PIN_5);
+ 	  HAL_Delay (250);
+ 	  printf("Received data :%s\n", RxBuf);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
-	  GSM_Send_AT_Command("AT");
-	  while( HAL_UART_Receive(&huart2,(uint8_t *)RX_Buffer, RX_BUFFER_SIZE,2000));
-	  printf("Received data %s\n",RX_Buffer);
-	  HAL_Delay(1000);
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -190,37 +179,53 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief USART2 Initialization Function
+  * @brief UART4 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART2_UART_Init(void)
+static void MX_UART4_Init(void)
 {
 
-  /* USER CODE BEGIN USART2_Init 0 */
+  /* USER CODE BEGIN UART4_Init 0 */
 
-  /* USER CODE END USART2_Init 0 */
+  /* USER CODE END UART4_Init 0 */
 
-  /* USER CODE BEGIN USART2_Init 1 */
+  /* USER CODE BEGIN UART4_Init 1 */
 
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart4.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart4.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART2_Init 2 */
+  /* USER CODE BEGIN UART4_Init 2 */
 
-  /* USER CODE END USART2_Init 2 */
+  /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Channel5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Channel5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Channel5_IRQn);
 
 }
 
@@ -231,11 +236,22 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PA5 */
+  GPIO_InitStruct.Pin = GPIO_PIN_5;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
