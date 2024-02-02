@@ -1,0 +1,11 @@
+../Drivers/CMSIS/Include/core_cm4.h:2059:26:ITM_SendChar	4
+../Core/Src/main.c:28:5:_write	2
+../Core/Src/main.c:36:7:GSM_Send_AT_Command	1
+../Core/Src/main.c:45:5:GSM_TCP_init	17
+../Core/Src/main.c:174:5:GSM_APN_SET	20
+../Core/Src/main.c:299:5:GSM_SIM_INIT	38
+../Core/Src/main.c:587:5:main	4
+../Core/Src/main.c:659:6:SystemClock_Config	4
+../Core/Src/main.c:709:13:MX_UART4_Init	2
+../Core/Src/main.c:744:13:MX_GPIO_Init	1
+../Core/Src/main.c:764:6:Error_Handler	1
