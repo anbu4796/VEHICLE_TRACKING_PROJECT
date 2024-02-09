@@ -1,0 +1,5 @@
+../Core/Src/gps.c:32:6:get_data_from_gps	496	static
+../Core/Src/gps.c:117:6:extract_data_for_GGA	96	static
+../Core/Src/gps.c:198:6:json_format_for_GGA	64	static
+../Core/Src/gps.c:208:6:extract_data_for_RMC	112	static
+../Core/Src/gps.c:293:6:json_format_for_RMC	64	static
