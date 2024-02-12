@@ -1,0 +1,6 @@
+../Core/Src/gsm.c:24:5:DATA_SEND_READY	4
+../Core/Src/gsm.c:59:7:GSM_Send_AT_Command	1
+../Core/Src/gsm.c:69:5:GSM_TCP_init	15
+../Core/Src/gsm.c:165:5:GSM_APN_SET	28
+../Core/Src/gsm.c:340:5:GSM_SIM_INIT	50
+../Core/Src/gsm.c:659:5:GSM_Send_Data	10
