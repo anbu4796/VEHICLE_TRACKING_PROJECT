@@ -133,7 +133,7 @@ void extract_data_for_GGA( char *GGA_buffer)
 						ist_minutes = (utc_minutes + 30) % 60;
 						ist_seconds = utc_seconds;
 						//Adjusting the hours,minutes and seconds to proper time stands
-						if(ist_minutes==0)
+						if(ist_minutes==0|| (utc_minutes+30)>60)
 						{
 							 ist_hours+=1;
 						}
@@ -229,7 +229,7 @@ void extract_data_for_RMC(char *RMC_buffer)
 						 ist_minutes = (utc_minutes + 30) % 60;
 						 ist_seconds = utc_seconds;
 						 //Adjusting the hours,minutes and seconds to proper time stands
-						 if(ist_minutes==0)
+						 if(ist_minutes==0||(utc_minutes+30)>60)
 						 {
 						 	 ist_hours+=1;
 						 }
